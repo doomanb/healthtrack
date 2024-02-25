@@ -16,7 +16,7 @@ public class CustomerServiceImpl implements CustomerService {
 
     private final CustomerRepo customerRepo;
     private final ValidationService validationService;
-    private final BCryptPasswordEncoder bCryptPasswordEncoder;
+    private final BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
 
 
     @Override

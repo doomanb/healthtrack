@@ -7,5 +7,5 @@ import java.util.Optional;
 
 public interface CustomerRepo extends JpaRepository<CustomerEntity, Long> {
 
-    Optional<CustomerEntity> countAll();
+    Optional<CustomerEntity> findByEmail(String email);
 }

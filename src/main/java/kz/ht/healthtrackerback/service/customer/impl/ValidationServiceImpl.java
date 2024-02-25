@@ -1,5 +1,6 @@
 package kz.ht.healthtrackerback.service.customer.impl;
 
+import kz.ht.healthtrackerback.service.customer.ValidationService;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.springframework.http.HttpStatus;
