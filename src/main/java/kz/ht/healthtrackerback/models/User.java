@@ -1,5 +1,6 @@
 package kz.ht.healthtrackerback.models;
 
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -11,7 +12,11 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@Entity
+@Table(name = "user")
 public class User {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
     private String email;
     private String name;
@@ -26,5 +31,6 @@ public class User {
     private long generalPurposeTypeId;
     private long dietTypeId;
     private long activityLevelId;
-    private List<Product> avoidingProducts;
+    @Transient
+    private List<ProductType> avoidingProducts;
 }
