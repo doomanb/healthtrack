@@ -7,6 +7,8 @@ import kz.ht.healthtrackerback.service.user.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController("/api")
 @RequiredArgsConstructor
 @SuppressWarnings("unused")
@@ -18,55 +20,55 @@ public class MainPageController {
 
     //pre-register-page
     @GetMapping("/diettype")
-    public BaseResponse<DietType> getDietTypes() {
-        return null;
+    public List<DietType> getDietTypes() {
+        return basePageService.getDietTypes();
     }
 
     @GetMapping("/producttype")
-    public BaseResponse<ProductType> getProductTypes() {
-        return null;
+    public List<ProductType> getProductTypes() {
+        return basePageService.getProductTypes();
     }
 
     @GetMapping("/activitylevel")
-    public BaseResponse<ActivityLevel> getActivityLevels() {
-        return null;
+    public BaseResponse<List<ActivityLevel>> getActivityLevels() {
+        return basePageService.getActivityLevels();
     }
 
     @GetMapping("/generalpurposetype")
-    public BaseResponse<GeneralPurposeType> getGeneralPurpostTypes() {
-        return null;
+    public BaseResponse<List<GeneralPurposeType>> getGeneralPurposeTypes() {
+        return basePageService.getGeneralPurposeTypes();
     }
 
     @GetMapping("/user")
-    public BaseResponse<User> getUserByEmail(@RequestParam("email") String email) {
-        return null;
+    public BaseResponse<User> getUserByEmail(@RequestParam String email) {
+        return basePageService.getUserByEmail(email);
     }
 
 
     //user-service
     @PostMapping("/user/register")
     public void register(@RequestBody UserRegistrationForm request) {
-
+        userService.register(request);
     }
 
     @PostMapping("/user/login")
     public void login(@RequestBody UserAuthForm request) {
-
+        userService.authorization(request);
     }
 
     @PostMapping("/user/updateinfo")
     public void updateInfo(@RequestBody UserUpdateForm request) {
-
+        userService.updateUserInfo(request);
     }
 
     //main-page
     @GetMapping("/dayplan/day")
-    public BaseResponse<DayPlan> getDayPlanForDate() {
+    public BaseResponse<DayPlan> getDayPlanForDate(@RequestParam int userId) {
         return null;
     }
 
     @PostMapping("/dayplan/generate")
-    public void postGenerateDayPlan(@RequestBody DayPlaneGenerateRequest request) {
+    public void generateDayPlan(@RequestBody DayPlaneGenerateRequest request) {
 
     }
 

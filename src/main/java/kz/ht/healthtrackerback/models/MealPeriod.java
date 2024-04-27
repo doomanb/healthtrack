@@ -1,5 +1,6 @@
 package kz.ht.healthtrackerback.models;
 
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -11,7 +12,11 @@ import java.util.List;
 @NoArgsConstructor
 @Builder
 @Data
+@Entity
+@Table(name = "meal_period")
 public class MealPeriod {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
     private int dayPlanId;
     private String mealPeriodName;
@@ -20,5 +25,6 @@ public class MealPeriod {
     private int proteins;
     private int carbohydrates;
     private int fats;
+    @Transient
     private List<Meal> meals;
 }
