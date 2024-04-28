@@ -19,5 +19,6 @@ public class Ingredient {
     private int amount;
     private String name;
     private String imageURL;
+    private int mealId;
     private int productId;
 }

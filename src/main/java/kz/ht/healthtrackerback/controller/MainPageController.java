@@ -5,8 +5,11 @@ import kz.ht.healthtrackerback.service.basepage.BasePageService;
 import kz.ht.healthtrackerback.service.mainpage.MainPageService;
 import kz.ht.healthtrackerback.service.user.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController("/api")
@@ -63,7 +66,7 @@ public class MainPageController {
 
     //main-page
     @GetMapping("/dayplan/day")
-    public BaseResponse<DayPlan> getDayPlanForDate(@RequestParam int userId) {
+    public BaseResponse<DayPlan> getDayPlanForDate(@RequestParam int userId, @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date) {
         return null;
     }
 
@@ -73,8 +76,8 @@ public class MainPageController {
     }
 
     @GetMapping("/meal/all")
-    public BaseResponse<Meal> getAllMeals() {
-        return null;
+    public BaseResponse<List<Meal>> getAllMeals() {
+        return mainPageService.getAllMeals();
     }
 
     @DeleteMapping("/dayplan/remove-meal")
@@ -89,12 +92,12 @@ public class MainPageController {
 
     @PostMapping("/user/add-products")
     public void addProductsToUser(@RequestBody AddProductsRequest request) {
-
+        mainPageService.addProductToUser(request);
     }
 
     @GetMapping("/user/products")
-    public BaseResponse<Product> getUserProducts(@RequestParam long userId) {
-        return null;
+    public BaseResponse<List<Product>> getUserProducts(@RequestParam int userId) {
+        return mainPageService.getUserProducts(userId);
     }
 
 
