@@ -8,6 +8,7 @@ import kz.ht.healthtrackerback.service.user.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -21,6 +22,7 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepo userRepo;
     private final UserAvoidingProductsRepo userAvoidingProductsRepo;
+    private final PasswordEncoder passwordEncoder;
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$");
 
@@ -32,7 +34,7 @@ public class UserServiceImpl implements UserService {
         val userId = userRepo.save(User.builder()
                 .name(request.getName())
                 .email(request.getEmail())
-                .password(request.getPassword())
+                .password(passwordEncoder.encode(request.getPassword()))
                 .dietTypeId(request.getDietTypeId())
                 .purposeType(request.getPurposeType())
                 .generalPurposeTypeId(request.getGeneralPurposeTypeId())
@@ -51,12 +53,12 @@ public class UserServiceImpl implements UserService {
     @Override
     public void authorization(UserAuthForm request) {
         val account = userRepo.findByEmail(request.getEmail());
-        if (account.isEmpty()) {
+        if (!account.isPresent()) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found");
         }
 
         account.ifPresent(auth -> {
-            if (!auth.getPassword().equals(request.getPassword())) {
+            if (!passwordEncoder.matches(request.getPassword(), auth.getPassword())) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Incorrect password");
             }
         });
@@ -92,6 +94,14 @@ public class UserServiceImpl implements UserService {
                 .userId(userId)
                 .build()));
     }
+
+    private boolean authenticate(String username, String rawPassword) {
+        // Retrieve the encrypted password from the database based on the username
+        String encryptedPassword = ""; // retrieve encrypted password
+        // Compare the provided raw password with the encrypted password
+        return passwordEncoder.matches(rawPassword, encryptedPassword);
+    }
+
 
     private void validateRegistrationRequest(UserRegistrationForm request) {
         if (EMAIL_PATTERN.matcher(request.getEmail()).matches()) {

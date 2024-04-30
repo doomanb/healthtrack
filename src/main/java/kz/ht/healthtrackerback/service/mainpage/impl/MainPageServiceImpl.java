@@ -23,7 +23,7 @@ public class MainPageServiceImpl implements MainPageService {
     private final UserProductRepo userProductRepo;
 
     public BaseResponse<DayPlan> getDayPlan(int userId, LocalDateTime date) {
-
+        return null;
     }
 
     @Override
