@@ -95,13 +95,6 @@ public class UserServiceImpl implements UserService {
                 .build()));
     }
 
-    private boolean authenticate(String username, String rawPassword) {
-        // Retrieve the encrypted password from the database based on the username
-        String encryptedPassword = ""; // retrieve encrypted password
-        // Compare the provided raw password with the encrypted password
-        return passwordEncoder.matches(rawPassword, encryptedPassword);
-    }
-
 
     private void validateRegistrationRequest(UserRegistrationForm request) {
         if (EMAIL_PATTERN.matcher(request.getEmail()).matches()) {
