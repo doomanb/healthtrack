@@ -12,9 +12,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@RestController("/api")
 @RequiredArgsConstructor
-@SuppressWarnings("unused")
+@RequestMapping("/api")
+@RestController
 public class MainPageController {
 
     private final UserService userService;
