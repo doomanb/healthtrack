@@ -32,17 +32,13 @@ public class BasePageServiceImpl implements BasePageService {
     }
 
     @Override
-    public BaseResponse<List<ActivityLevel>> getActivityLevels() {
-        return BaseResponse.<List<ActivityLevel>>builder()
-                .value(activityLevelRepo.findAll())
-                .build();
+    public List<ActivityLevel> getActivityLevels() {
+        return activityLevelRepo.findAll();
     }
 
     @Override
-    public BaseResponse<List<GeneralPurposeType>> getGeneralPurposeTypes() {
-        return BaseResponse.<List<GeneralPurposeType>>builder()
-                .value(generalPurposeTypeRepo.findAll())
-                .build();
+    public List<GeneralPurposeType> getGeneralPurposeTypes() {
+        return generalPurposeTypeRepo.findAll();
     }
 
     @Override

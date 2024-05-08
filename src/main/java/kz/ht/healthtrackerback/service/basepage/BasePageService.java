@@ -10,9 +10,9 @@ public interface BasePageService {
 
     List<ProductType> getProductTypes();
 
-    BaseResponse<List<ActivityLevel>> getActivityLevels();
+    List<ActivityLevel> getActivityLevels();
 
-    BaseResponse<List<GeneralPurposeType>> getGeneralPurposeTypes();
+    List<GeneralPurposeType> getGeneralPurposeTypes();
 
     BaseResponse<User> getUserByEmail(String email);
 }

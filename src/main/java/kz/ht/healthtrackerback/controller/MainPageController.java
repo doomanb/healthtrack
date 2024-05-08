@@ -34,12 +34,12 @@ public class MainPageController {
     }
 
     @GetMapping("/activitylevel")
-    public BaseResponse<List<ActivityLevel>> getActivityLevels() {
+    public List<ActivityLevel> getActivityLevels() {
         return basePageService.getActivityLevels();
     }
 
     @GetMapping("/generalpurposetype")
-    public BaseResponse<List<GeneralPurposeType>> getGeneralPurposeTypes() {
+    public List<GeneralPurposeType> getGeneralPurposeTypes() {
         return basePageService.getGeneralPurposeTypes();
     }
 
@@ -56,8 +56,8 @@ public class MainPageController {
     }
 
     @PostMapping("/user/login")
-    public void login(@RequestBody UserAuthForm request) {
-        userService.authorization(request);
+    public BaseResponse<User> login(@RequestBody UserAuthForm request) {
+        return userService.authorization(request);
     }
 
     @PostMapping("/user/updateinfo")

@@ -51,7 +51,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void authorization(UserAuthForm request) {
+    public BaseResponse<User> authorization(UserAuthForm request) {
         val account = userRepo.findByEmail(request.getEmail());
         if (!account.isPresent()) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found");
@@ -62,6 +62,10 @@ public class UserServiceImpl implements UserService {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Incorrect password");
             }
         });
+
+        return BaseResponse.<User>builder()
+                .value(account.get())
+                .build();
     }
 
     @Override
@@ -97,10 +101,6 @@ public class UserServiceImpl implements UserService {
 
 
     private void validateRegistrationRequest(UserRegistrationForm request) {
-        if (EMAIL_PATTERN.matcher(request.getEmail()).matches()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid email");
-        }
-
         if (!request.getPassword().equals(request.getConfirmPassword())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Passwords does not match");
         }
