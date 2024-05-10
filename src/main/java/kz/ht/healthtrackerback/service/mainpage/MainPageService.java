@@ -1,17 +1,24 @@
 package kz.ht.healthtrackerback.service.mainpage;
 
-import kz.ht.healthtrackerback.models.AddProductsRequest;
-import kz.ht.healthtrackerback.models.BaseResponse;
-import kz.ht.healthtrackerback.models.Meal;
-import kz.ht.healthtrackerback.models.Product;
+import kz.ht.healthtrackerback.models.*;
+import org.springframework.web.bind.annotation.RequestBody;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public interface MainPageService {
 
-    BaseResponse<List<Meal>> getAllMeals();
+    List<AllMeal> getAllMeals();
 
-    BaseResponse<List<Product>> getUserProducts(int userId);
+    List<Product> getUserProducts(int userId);
 
     void addProductToUser(AddProductsRequest request);
+
+    DayPlan addMealToPlan(AddMealRequest request);
+
+    DayPlan deleteMealToPlan(int MealId, int DayPlanId, int PlanMealCollectionId);
+
+    DayPlan generateDayPlan(DayPlaneGenerateRequest request);
+
+    DayPlan getDayPlanForDate(int userId, String date);
 }

@@ -9,7 +9,6 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -51,8 +50,8 @@ public class MainPageController {
 
     //user-service
     @PostMapping("/user/register")
-    public void register(@RequestBody UserRegistrationForm request) {
-        userService.register(request);
+    public User register(@RequestBody UserRegistrationForm request) {
+        return userService.register(request);
     }
 
     @PostMapping("/user/login")
@@ -67,28 +66,30 @@ public class MainPageController {
 
     //main-page
     @GetMapping("/dayplan/day")
-    public BaseResponse<DayPlan> getDayPlanForDate(@RequestParam int userId, @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date) {
-        return null;
+    public DayPlan getDayPlanForDate(@RequestParam int userId, @RequestParam String date) {
+        return mainPageService.getDayPlanForDate(userId, date);
     }
 
     @PostMapping("/dayplan/generate")
-    public void generateDayPlan(@RequestBody DayPlaneGenerateRequest request) {
-
+    public DayPlan generateDayPlan(@RequestBody DayPlaneGenerateRequest request) {
+        return mainPageService.generateDayPlan(request);
     }
 
     @GetMapping("/meal/all")
-    public BaseResponse<List<Meal>> getAllMeals() {
+    public List<AllMeal> getAllMeals() {
         return mainPageService.getAllMeals();
     }
 
     @DeleteMapping("/dayplan/remove-meal")
-    public void deleteMealFromPlan(@RequestParam int MealId, @RequestParam int DayPlanId, @RequestParam int PlanMealCollectionId) {
-
+    public DayPlan deleteMealFromPlan(@RequestParam int MealId,
+                                      @RequestParam int DayPlanId,
+                                      @RequestParam int PlanMealCollectionId) {
+        return mainPageService.deleteMealToPlan(MealId, DayPlanId, PlanMealCollectionId);
     }
 
     @PostMapping("/dayplan/add-meal")
-    public void addMealToPlan(@RequestBody AddMealRequest request) {
-
+    public DayPlan addMealToPlan(@RequestBody AddMealRequest request) {
+        return mainPageService.addMealToPlan(request);
     }
 
     @PostMapping("/user/add-products")
@@ -97,7 +98,7 @@ public class MainPageController {
     }
 
     @GetMapping("/user/products")
-    public BaseResponse<List<Product>> getUserProducts(@RequestParam int userId) {
+    public List<Product> getUserProducts(@RequestParam int userId) {
         return mainPageService.getUserProducts(userId);
     }
 

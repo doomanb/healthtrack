@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 
 @AllArgsConstructor
@@ -20,7 +20,8 @@ public class DayPlan {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
     private int userId;
-    private LocalDateTime date;
+    @Column(name = "user_date")
+    private LocalDate date;
     private int calories;
     private int proteins;
     private int carbohydrates;

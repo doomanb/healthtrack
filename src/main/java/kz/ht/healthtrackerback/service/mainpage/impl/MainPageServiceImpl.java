@@ -5,10 +5,16 @@ import kz.ht.healthtrackerback.repository.*;
 import kz.ht.healthtrackerback.service.mainpage.MainPageService;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
+import org.springframework.data.crossstore.ChangeSetPersister;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -21,39 +27,53 @@ public class MainPageServiceImpl implements MainPageService {
     private final MealRepo mealRepo;
     private final IngredientRepo ingredientRepo;
     private final UserProductRepo userProductRepo;
+    private final MealPeriodRepo mealPeriodRepo;
+    private final AllMealRepo allMealRepo;
+    private final AllIngredientRepo allIngredientRepo;
 
-    public BaseResponse<DayPlan> getDayPlan(int userId, LocalDateTime date) {
-        return null;
-    }
+    private final static DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+
+    private final static List<MealPeriod> ALL_PERIOD = Arrays.asList(
+            MealPeriod.builder()
+                    .mealPeriodName("Завтрак")
+                    .id(0)
+                    .periodType(0)
+                    .build(),
+            MealPeriod.builder()
+                    .mealPeriodName("Полдник")
+                    .id(1)
+                    .periodType(1)
+                    .build(),
+            MealPeriod.builder()
+                    .mealPeriodName("Обед")
+                    .id(2)
+                    .periodType(2)
+                    .build(),
+            MealPeriod.builder()
+                    .mealPeriodName("Ужин")
+                    .id(3)
+                    .periodType(3)
+                    .build());
 
     @Override
-    public BaseResponse<List<Meal>> getAllMeals() {
-        val meals = mealRepo.findAll();
+    public List<AllMeal> getAllMeals() {
+        val meals = allMealRepo.findAll();
 
-        val mealsWithIngredients = meals.stream()
-                .peek(meal -> meal.setIngredients(ingredientRepo
+        return meals.stream()
+                .peek(meal -> meal.setIngredients(allIngredientRepo
                         .findAllByMealId(meal.getId())))
                 .collect(Collectors.toList());
-
-        return BaseResponse.<List<Meal>>builder()
-                .value(mealsWithIngredients)
-                .build();
-
     }
 
     @Override
-    public BaseResponse<List<Product>> getUserProducts(int userId) {
+    public List<Product> getUserProducts(int userId) {
         val userProductIds = userProductRepo.findAllByUserId(userId).stream()
                 .map(UserProduct::getProductId)
                 .collect(Collectors.toSet());
 
-        val filteredProducts = productRepo.findAll().stream()
+        return productRepo.findAll().stream()
                 .filter(prod -> userProductIds.contains(prod.getId()))
                 .collect(Collectors.toList());
-
-        return BaseResponse.<List<Product>>builder()
-                .value(filteredProducts)
-                .build();
     }
 
     @Override
@@ -65,6 +85,146 @@ public class MainPageServiceImpl implements MainPageService {
                         .build())
                 .collect(Collectors.toList());
         userProductRepo.saveAll(productIds);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Throwable.class)
+    public DayPlan deleteMealToPlan(int mealId, int dayPlanId, int planMealCollectionId) {
+        mealRepo.deleteById(mealId);
+        return dayPlanRepo.findById(dayPlanId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Day plan not found"));
+    }
+
+    @Override
+    @Transactional(rollbackFor = Throwable.class)
+    public DayPlan addMealToPlan(AddMealRequest request) {
+        val meal = allMealRepo.findById(request.getMealId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Meal not found"));
+        val ingredients = allIngredientRepo.findAllByMealId(meal.getId());
+        val savedIngredients = ingredientRepo.saveAll(ingredients.stream()
+                .map(i -> Ingredient.builder()
+                        .metricType(i.getMetricType())
+                        .amount(i.getAmount())
+                        .name(i.getName())
+                        .imageURL(i.getImageURL())
+                        .mealId(meal.getId())
+                        .productId(i.getProductId())
+                        .build())
+                .collect(Collectors.toList()));
+        val dayPlan = dayPlanRepo.findById(request.getDayPlanId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Day plan not found"));
+        val mealPeriod = mealPeriodRepo.findById(request.getPlanMealCollectionId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Collection not found"));
+        val meals = Collections.singletonList(Meal.builder()
+                .id(meal.getId())
+                .mealPeriodId(mealPeriod.getId())
+                .name(meal.getName())
+                .recipe(meal.getRecipe())
+                .imageURL(meal.getImageURL())
+                .calories(meal.getCalories())
+                .proteins(meal.getProteins())
+                .carbohydrates(meal.getCarbohydrates())
+                .fats(meal.getFats())
+                .ingredients(savedIngredients)
+                .build());
+
+        mealPeriod.setMeals(Collections.singletonList(Meal.builder()
+                        .id(meal.getId())
+                        .mealPeriodId(mealPeriod.getId())
+                        .name(meal.getName())
+                        .recipe(meal.getRecipe())
+                        .imageURL(meal.getImageURL())
+                        .calories(meal.getCalories())
+                        .proteins(meal.getProteins())
+                        .carbohydrates(meal.getCarbohydrates())
+                        .fats(meal.getFats())
+                        .ingredients(savedIngredients)
+                .build()));
+
+        mealRepo.saveAll(meals);
+
+        mealPeriod.getMeals().forEach(m -> {
+            if (request.getMealId() == m.getId()) {
+                m.setId(meal.getId());
+                m.setMealPeriodId(mealPeriod.getId());
+                m.setName(meal.getName());
+                m.setRecipe(meal.getRecipe());
+                m.setImageURL(meal.getImageURL());
+                m.setCalories(meal.getCalories());
+                m.setProteins(meal.getProteins());
+                m.setCarbohydrates(meal.getCarbohydrates());
+                m.setFats(meal.getFats());
+                m.setIngredients(ingredients.stream()
+                        .map(i -> Ingredient.builder()
+                                .mealId(meal.getId())
+                                .amount(i.getAmount())
+                                .imageURL(i.getImageURL())
+                                .mealId(i.getMealId())
+                                .productId(i.getProductId())
+                                .build())
+                        .collect(Collectors.toList()));
+            }
+        });
+        dayPlan.setCalories(dayPlan.getCalories() + meal.getCalories());
+        dayPlan.setProteins(dayPlan.getProteins() + meal.getProteins());
+        dayPlan.setCarbohydrates(dayPlan.getCarbohydrates() + meal.getCarbohydrates());
+        dayPlan.setFats(dayPlan.getFats() + meal.getFats());
+        dayPlan.setMealPeriods(mealPeriodRepo.findAllByDayPlanId(dayPlan.getId()));
+
+        return dayPlan;
+    }
+
+    @Override
+    public DayPlan generateDayPlan(DayPlaneGenerateRequest request) {
+        val dayPlan = dayPlanRepo.save(DayPlan.builder()
+                .userId(request.getUserId())
+                .date(LocalDate.parse(request.getDate(), DATE_FORMATTER))
+                .build());
+        val mealPeriod = ALL_PERIOD.stream()
+                .peek(m -> m.setDayPlanId(dayPlan.getId()))
+                .collect(Collectors.toList());
+        mealPeriodRepo.saveAll(mealPeriod);
+        dayPlan.setMealPeriods(mealPeriod);
+        return dayPlan;
+    }
+
+
+    @Override
+    public DayPlan getDayPlanForDate(int userId, String date) {
+        val dayPlan = dayPlanRepo.findByUserIdAndDate(userId, LocalDate.parse(date, DATE_FORMATTER))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Day plan not found"));
+        val mealPeriods = mealPeriodRepo.findAllByDayPlanId(dayPlan.getId());
+
+        val mealPeriodIds = mealPeriods.stream()
+                .map(MealPeriod::getId)
+                .collect(Collectors.toList());
+
+        val meals = mealRepo.findAllByMealPeriodIdIn(mealPeriodIds);
+        val mealPeriodToMealsMap = meals.stream()
+                .collect(Collectors.groupingBy(Meal::getMealPeriodId));
+        val mealIds = meals.stream()
+                .map(Meal::getId)
+                .collect(Collectors.toList());
+
+        val ingredients = ingredientRepo.findAllByMealIdIn(mealIds);
+
+        val mealToIngredientsMap = ingredients.stream()
+                .collect(Collectors.groupingBy(Ingredient::getMealId));
+
+        mealPeriods.forEach(mp -> {
+            val mealsForPeriod = mealPeriodToMealsMap.getOrDefault(mp.getId(), Collections.emptyList());
+
+            mealsForPeriod.forEach(meal -> {
+                val ingredientsForMeal = mealToIngredientsMap.getOrDefault(meal.getId(), Collections.emptyList());
+                meal.setIngredients(ingredientsForMeal);
+            });
+
+            mp.setMeals(mealsForPeriod);
+        });
+
+        dayPlan.setMealPeriods(mealPeriods);
+
+        return dayPlan;
     }
 
 

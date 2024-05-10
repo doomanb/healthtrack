@@ -6,26 +6,20 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
-import java.util.List;
 
+@Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@Data
 @Entity
-@Table(name = "meal")
-public class Meal {
+@Table(name = "all_ingredient")
+public class AllIngredient {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
-    private int mealPeriodId;
+    private int metricType;
+    private int amount;
     private String name;
-    private String recipe;
     private String imageURL;
-    private int calories;
-    private int proteins;
-    private int carbohydrates;
-    private int fats;
-    @Transient
-    private List<Ingredient> ingredients;
+    private int mealId;
+    private int productId;
 }

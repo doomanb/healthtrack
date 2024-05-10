@@ -13,12 +13,11 @@ import java.util.List;
 @Builder
 @Data
 @Entity
-@Table(name = "meal")
-public class Meal {
+@Table(name = "all_meal")
+public class AllMeal {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
-    private int mealPeriodId;
     private String name;
     private String recipe;
     private String imageURL;
@@ -27,5 +26,5 @@ public class Meal {
     private int carbohydrates;
     private int fats;
     @Transient
-    private List<Ingredient> ingredients;
+    private List<AllIngredient> ingredients;
 }

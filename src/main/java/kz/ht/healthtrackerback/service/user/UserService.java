@@ -5,7 +5,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 public interface UserService {
 
-    void register(UserRegistrationForm request);
+    User register(UserRegistrationForm request);
 
     BaseResponse<User> authorization(UserAuthForm request);
 

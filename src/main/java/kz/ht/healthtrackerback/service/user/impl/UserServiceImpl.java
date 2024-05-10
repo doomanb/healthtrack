@@ -29,9 +29,9 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(rollbackFor = Throwable.class)
-    public void register(UserRegistrationForm request) {
+    public User register(UserRegistrationForm request) {
         validateRegistrationRequest(request);
-        val userId = userRepo.save(User.builder()
+        val user = userRepo.save(User.builder()
                 .name(request.getName())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
@@ -45,8 +45,10 @@ public class UserServiceImpl implements UserService {
                 .weight(request.getWeight())
                 .age(request.getAge())
                 .activityLevelId(request.getActivityLevelId())
-                .build()).getId();
-        saveAvoidingProducts(userId, request.getAvoidingProductIds());
+                .build());
+        saveAvoidingProducts(user.getId(), request.getAvoidingProductIds());
+
+        return user;
 
     }
 
