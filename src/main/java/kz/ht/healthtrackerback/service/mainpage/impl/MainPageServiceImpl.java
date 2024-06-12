@@ -34,7 +34,8 @@ public class MainPageServiceImpl implements MainPageService {
     private final AllMealRepo allMealRepo;
     private final AllIngredientRepo allIngredientRepo;
 
-    private final static DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
+    private final static DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
+    private final static DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 
     private final static List<MealPeriod> ALL_PERIOD = Arrays.asList(
             MealPeriod.builder()
@@ -184,7 +185,7 @@ public class MainPageServiceImpl implements MainPageService {
         val formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
         val dayPlan = dayPlanRepo.save(DayPlan.builder()
                 .userId(request.getUserId())
-                .date(LocalDate.parse(zonedDateTime.format(formatter), DATE_FORMATTER))
+                .date(LocalDate.parse(zonedDateTime.format(formatter), DATE_TIME_FORMATTER))
                 .build());
         val mealPeriod = ALL_PERIOD.stream()
                 .peek(m -> m.setDayPlanId(dayPlan.getId()))
