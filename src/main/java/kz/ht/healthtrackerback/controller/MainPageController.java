@@ -55,8 +55,8 @@ public class MainPageController {
     }
 
     @PostMapping("/user/login")
-    public BaseResponse<User> login(@RequestBody UserAuthForm request) {
-        return userService.authorization(request);
+    public User login(@RequestBody UserAuthForm request) {
+        return userService.authorization(request).getValue();
     }
 
     @PostMapping("/user/updateinfo")
