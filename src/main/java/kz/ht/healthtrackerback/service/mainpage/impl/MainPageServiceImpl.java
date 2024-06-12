@@ -11,7 +11,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Collections;
@@ -31,7 +34,7 @@ public class MainPageServiceImpl implements MainPageService {
     private final AllMealRepo allMealRepo;
     private final AllIngredientRepo allIngredientRepo;
 
-    private final static DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+    private final static DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
 
     private final static List<MealPeriod> ALL_PERIOD = Arrays.asList(
             MealPeriod.builder()
@@ -176,9 +179,12 @@ public class MainPageServiceImpl implements MainPageService {
 
     @Override
     public DayPlan generateDayPlan(DayPlaneGenerateRequest request) {
+        val instant = Instant.parse(request.getDate());
+        val zonedDateTime = instant.atZone(ZoneId.of("UTC+5"));
+        val formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
         val dayPlan = dayPlanRepo.save(DayPlan.builder()
                 .userId(request.getUserId())
-                .date(LocalDate.parse(request.getDate(), DATE_FORMATTER))
+                .date(LocalDate.parse(zonedDateTime.format(formatter), DATE_FORMATTER))
                 .build());
         val mealPeriod = ALL_PERIOD.stream()
                 .peek(m -> m.setDayPlanId(dayPlan.getId()))
