@@ -9,5 +9,5 @@ public interface UserService {
 
     BaseResponse<User> authorization(UserAuthForm request);
 
-    void updateUserInfo(UserUpdateForm request);
+    User updateUserInfo(UserUpdateForm request);
 }

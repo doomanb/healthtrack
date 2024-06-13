@@ -1,9 +1,12 @@
 package kz.ht.healthtrackerback.service.mainpage.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import kz.ht.healthtrackerback.models.*;
 import kz.ht.healthtrackerback.repository.*;
 import kz.ht.healthtrackerback.service.mainpage.MainPageService;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.http.HttpStatus;
@@ -16,12 +19,11 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class MainPageServiceImpl implements MainPageService {
 
@@ -33,6 +35,7 @@ public class MainPageServiceImpl implements MainPageService {
     private final MealPeriodRepo mealPeriodRepo;
     private final AllMealRepo allMealRepo;
     private final AllIngredientRepo allIngredientRepo;
+    private final ObjectMapper objectMapper;
 
     private final static DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
     private final static DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy");
@@ -101,7 +104,9 @@ public class MainPageServiceImpl implements MainPageService {
 
     @Override
     @Transactional(rollbackFor = Throwable.class)
+    @SneakyThrows
     public DayPlan addMealToPlan(AddMealRequest request) {
+        log.info("addMealToPlan request: " + objectMapper.writeValueAsString(request));
         val meal = allMealRepo.findById(request.getMealId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Meal not found"));
         val ingredients = allIngredientRepo.findAllByMealId(meal.getId());
@@ -133,16 +138,16 @@ public class MainPageServiceImpl implements MainPageService {
                 .build());
 
         mealPeriod.setMeals(Collections.singletonList(Meal.builder()
-                        .id(meal.getId())
-                        .mealPeriodId(mealPeriod.getId())
-                        .name(meal.getName())
-                        .recipe(meal.getRecipe())
-                        .imageURL(meal.getImageURL())
-                        .calories(meal.getCalories())
-                        .proteins(meal.getProteins())
-                        .carbohydrates(meal.getCarbohydrates())
-                        .fats(meal.getFats())
-                        .ingredients(savedIngredients)
+                .id(meal.getId())
+                .mealPeriodId(mealPeriod.getId())
+                .name(meal.getName())
+                .recipe(meal.getRecipe())
+                .imageURL(meal.getImageURL())
+                .calories(meal.getCalories())
+                .proteins(meal.getProteins())
+                .carbohydrates(meal.getCarbohydrates())
+                .fats(meal.getFats())
+                .ingredients(savedIngredients)
                 .build()));
 
         mealRepo.saveAll(meals);
@@ -174,12 +179,14 @@ public class MainPageServiceImpl implements MainPageService {
         dayPlan.setCarbohydrates(dayPlan.getCarbohydrates() + meal.getCarbohydrates());
         dayPlan.setFats(dayPlan.getFats() + meal.getFats());
         dayPlan.setMealPeriods(mealPeriodRepo.findAllByDayPlanId(dayPlan.getId()));
-
-        return dayPlan;
+        log.info("add mealToPlan: " + objectMapper.writeValueAsString(dayPlan));
+        return getDayPlanForDate(dayPlan.getUserId(), LocalDate.now().format(DATE_FORMATTER));
     }
 
     @Override
+    @SneakyThrows
     public DayPlan generateDayPlan(DayPlaneGenerateRequest request) {
+        log.info("generateDayPlan request: " + objectMapper.writeValueAsString(request));
         val instant = Instant.parse(request.getDate());
         val zonedDateTime = instant.atZone(ZoneId.of("UTC+5"));
         val formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
@@ -192,12 +199,15 @@ public class MainPageServiceImpl implements MainPageService {
                 .collect(Collectors.toList());
         mealPeriodRepo.saveAll(mealPeriod);
         dayPlan.setMealPeriods(mealPeriod);
+        log.info("generateDayPlan: " + objectMapper.writeValueAsString(dayPlan));
         return dayPlan;
     }
 
 
     @Override
+    @SneakyThrows
     public DayPlan getDayPlanForDate(int userId, String date) {
+        log.info("getDayPlanForDate request: " + userId + " " + date);
         val dayPlan = dayPlanRepo.findByUserIdAndDate(userId, LocalDate.parse(date, DATE_FORMATTER))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Day plan not found"));
         val mealPeriods = mealPeriodRepo.findAllByDayPlanId(dayPlan.getId());
@@ -213,24 +223,35 @@ public class MainPageServiceImpl implements MainPageService {
                 .map(Meal::getId)
                 .collect(Collectors.toList());
 
-        val ingredients = ingredientRepo.findAllByMealIdIn(mealIds);
+        val ingredients = allIngredientRepo.findAllByMealIdIn(mealIds);
 
         val mealToIngredientsMap = ingredients.stream()
-                .collect(Collectors.groupingBy(Ingredient::getMealId));
+                .collect(Collectors.groupingBy(AllIngredient::getMealId));
 
         mealPeriods.forEach(mp -> {
             val mealsForPeriod = mealPeriodToMealsMap.getOrDefault(mp.getId(), Collections.emptyList());
 
             mealsForPeriod.forEach(meal -> {
-                val ingredientsForMeal = mealToIngredientsMap.getOrDefault(meal.getId(), Collections.emptyList());
+                val ingredientsForMeal = mealToIngredientsMap.getOrDefault(meal.getId(), Collections.emptyList()).stream()
+                        .map(i -> Ingredient.builder()
+                                .productId(i.getProductId())
+                                .mealId(i.getMealId())
+                                .metricType(i.getMetricType())
+                                .name(i.getName())
+                                .imageURL(i.getImageURL())
+                                .amount(i.getAmount())
+                                .build())
+                        .collect(Collectors.toList());
                 meal.setIngredients(ingredientsForMeal);
             });
 
             mp.setMeals(mealsForPeriod);
         });
 
-        dayPlan.setMealPeriods(mealPeriods);
-
+        dayPlan.setMealPeriods(mealPeriods.stream()
+                .sorted(Comparator.comparing(MealPeriod::getPeriodType))
+                .collect(Collectors.toList()));
+        log.info("dayPlanForDate: " + objectMapper.writeValueAsString(dayPlan));
         return dayPlan;
     }
 

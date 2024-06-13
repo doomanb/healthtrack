@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
+import java.util.Collections;
 import java.util.List;
 
 @AllArgsConstructor
@@ -27,5 +28,6 @@ public class Meal {
     private int carbohydrates;
     private int fats;
     @Transient
-    private List<Ingredient> ingredients;
+    @Builder.Default
+    private List<Ingredient> ingredients = Collections.emptyList();
 }

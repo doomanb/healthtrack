@@ -60,8 +60,8 @@ public class MainPageController {
     }
 
     @PostMapping("/user/updateinfo")
-    public void updateInfo(@RequestBody UserUpdateForm request) {
-        userService.updateUserInfo(request);
+    public User updateInfo(@RequestBody UserUpdateForm request) {
+        return userService.updateUserInfo(request);
     }
 
     //main-page

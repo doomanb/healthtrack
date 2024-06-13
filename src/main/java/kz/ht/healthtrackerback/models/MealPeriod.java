@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Collections;
 import java.util.List;
 
 @AllArgsConstructor
@@ -26,5 +27,6 @@ public class MealPeriod {
     private int carbohydrates;
     private int fats;
     @Transient
-    private List<Meal> meals;
+    @Builder.Default
+    private List<Meal> meals = Collections.emptyList();
 }

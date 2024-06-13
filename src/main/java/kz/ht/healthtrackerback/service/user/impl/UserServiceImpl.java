@@ -1,11 +1,14 @@
 package kz.ht.healthtrackerback.service.user.impl;
 
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import kz.ht.healthtrackerback.models.*;
 import kz.ht.healthtrackerback.repository.UserAvoidingProductsRepo;
 import kz.ht.healthtrackerback.repository.UserRepo;
 import kz.ht.healthtrackerback.service.user.UserService;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -13,16 +16,20 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
 @RequiredArgsConstructor
 @Service
+@Slf4j
 public class UserServiceImpl implements UserService {
 
     private final UserRepo userRepo;
     private final UserAvoidingProductsRepo userAvoidingProductsRepo;
     private final PasswordEncoder passwordEncoder;
+    private final ObjectMapper objectMapper;
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$");
 
@@ -53,6 +60,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @SneakyThrows
     public BaseResponse<User> authorization(UserAuthForm request) {
         val account = userRepo.findByEmail(request.getEmail());
         if (!account.isPresent()) {
@@ -64,7 +72,7 @@ public class UserServiceImpl implements UserService {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Incorrect password");
             }
         });
-
+        log.info("authorization: " + objectMapper.writeValueAsString(account.get()));
         return BaseResponse.<User>builder()
                 .value(account.get())
                 .build();
@@ -72,7 +80,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(rollbackFor = Throwable.class)
-    public void updateUserInfo(UserUpdateForm request) {
+    @SneakyThrows
+    public User updateUserInfo(UserUpdateForm request) {
         val oldUserInfo = userRepo.findById(request.getUserId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("User with id %s not found", request.getUserId())));
 
@@ -92,6 +101,7 @@ public class UserServiceImpl implements UserService {
         saveAvoidingProducts(request.getUserId(), request.getAvoidingProductIds());
 
         userRepo.save(oldUserInfo);
+        return oldUserInfo;
     }
 
     private void saveAvoidingProducts(int userId, List<Integer> avoidingProductIds) {
